@@ -1,6 +1,7 @@
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
+from reportlab.lib import colors
 import sqlite3
 import json
 import os
@@ -30,17 +31,10 @@ def generate_invoice_pdf(invoice_id):
     invoice = cursor.fetchone()
 
     if not invoice:
-        print("Facture introuvable.")
+        print("Invoice not found.")
         return
 
     number, date, total, customer_name, customer_address, customer_email = invoice
-
-
-    if not invoice:
-        print("Facture introuvable.")
-        return
-
-    number, date, total = invoice
 
     # Récupération des items
     cursor.execute("SELECT description, quantity, unit_price, total FROM items WHERE invoice_id = ?", (invoice_id,))
@@ -80,7 +74,7 @@ def generate_invoice_pdf(invoice_id):
     y -= 10 * mm
     
     c.setFont("Helvetica-Bold", 12)
-    c.drawString(x, y, "Facturé à :")
+    c.drawString(x, y, "Invoiced to :")
     y -= 5 * mm
     c.setFont("Helvetica", 10)
 
@@ -94,15 +88,15 @@ def generate_invoice_pdf(invoice_id):
             c.drawString(x, y, customer_email)
             y -= 5 * mm
     else:
-        c.drawString(x, y, "Client non spécifié")
+        c.drawString(x, y, "Customer not specified")
         y -= 5 * mm
 
 
-    # Tableau des items
+    # Table of items
     c.setFont("Helvetica-Bold", 11)
     c.drawString(x, y, "Description")
-    c.drawString(x + 80 * mm, y, "Qté")
-    c.drawString(x + 100 * mm, y, "Prix/H")
+    c.drawString(x + 80 * mm, y, "Qty")
+    c.drawString(x + 100 * mm, y, "Price/H")
     c.drawString(x + 130 * mm, y, "Total")
     y -= 8 * mm
     c.setFont("Helvetica", 10)
@@ -118,7 +112,30 @@ def generate_invoice_pdf(invoice_id):
     c.setFont("Helvetica-Bold", 12)
     c.drawString(x + 100 * mm, y, "Total :")
     c.drawString(x + 130 * mm, y, f"{total:.2f} €")
+    
+    # Footer (payment info)
+    c.setFont("Helvetica", 8)
+    c.setFillColor(colors.grey)
+
+    payment_text = f"""
+    Payment made to:
+    Name: {company.get('name', '')} 
+    Address : {company.get('address', '')}
+    Phone Number: {company.get('phone', '')}
+    Email: {company.get('email', '')}
+    Your payment information here: {company.get('payment', '')}
+    Wire Transfer, E-Transfer, Paypal or Check
+    Bank Name: {company.get('bank_name', '')}
+    Rounting Number: {company.get('routing_number', '')}
+    Bank Number: {company.get('bank_number', '')}
+    Account Number: {company.get('account_number', '')}
+    IBAN: {company.get('iban', '')}
+    Swift Code: {company.get('swift_code', '')}
+    """
+    text = c.beginText(x, 15 * mm)
+    text.textLines(payment_text)
+    c.drawText(text)
 
     c.save()
 
-    print(f"✅ PDF généré : {pdf_path}")
+    print(f"✅ Generated PDF : {pdf_path}")

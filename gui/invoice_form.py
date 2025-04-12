@@ -51,7 +51,7 @@ class InvoiceForm(tk.Frame):
         self.total_label = tk.Label(self, text="Total : 0.00 €", font=("Arial", 14, "bold"))
         self.total_label.grid(row=6, column=0, columnspan=3, pady=10)
         
-        self.save_btn = tk.Button(self, text="Sauvegarder la facture", command=self.save_invoice, bg="#4CAF50", fg="white")
+        self.save_btn = tk.Button(self, text="Save invoice", command=self.save_invoice, bg="#4CAF50", fg="white")
         self.save_btn.grid(row=7, column=0, columnspan=3, pady=10)
 
         self.load_customers()
@@ -97,9 +97,9 @@ class InvoiceForm(tk.Frame):
 
         # Save invoice
         cursor.execute("""
-            INSERT INTO invoices (number, date, customer_id, total, status)
-            VALUES (?, ?, ?, ?, ?)
-        """, (number, date, customer_id, total_general, "draft"))
+            INSERT INTO invoices (number, date, customer_id, total)
+            VALUES (?, ?, ?, ?)
+        """, (number, date, customer_id, total_general))
 
         invoice_id = cursor.lastrowid
 

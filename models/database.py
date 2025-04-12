@@ -1,6 +1,5 @@
 import sqlite3
 import os
-import datetime
 
 DB_PATH = "data/invoices.db"
 
@@ -16,8 +15,8 @@ def init_db():
         name TEXT,
         address TEXT,
         email TEXT,
-        siret TEXT,
-        vat_number TEXT
+        customer_name TEXT,
+        phone TEXT
     )
     """)
 
@@ -51,6 +50,12 @@ def init_db():
     conn.close()
     
 def generate_invoice_number():
+    """Generate a unique invoice number based on the current count of invoices in the database.
+    The format will be "FAC-XXXX" where XXXX is a zero-padded number.
+
+    Returns:
+        _type_: str
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
@@ -61,6 +66,12 @@ def generate_invoice_number():
     return f"FAC-{count:04d}"
 
 def get_all_customers():
+    """ Get all customers from the database.
+    Returns a list of tuples containing customer ID and name.
+
+    Returns:
+        _type_: list of tuples
+    """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT id, name FROM customers")
