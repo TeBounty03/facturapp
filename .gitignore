@@ -1,0 +1,15 @@
+# Environnement virtuel
+venv/
+
+# Fichiers Python compilés
+__pycache__/
+*.pyc
+
+# Fichiers de config perso
+*.db
+config/user_config.json
+
+# VS Code
+.vscode/
+.settings.json
+*.code-workspace
