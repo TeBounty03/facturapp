@@ -1,0 +1,28 @@
+msgid ""
+msgstr ""
+"Content-Type: text/plain; charset=UTF-8\n"
+"Language: fr\n"
+
+msgid "Description:"
+msgstr "Description :"
+
+msgid "Quantity (h):"
+msgstr "Quantité (h) :"
+
+msgid "Price / hour (€):"
+msgstr "Prix / heure (€) :"
+
+msgid "Add"
+msgstr "Ajouter"
+
+msgid "Description"
+msgstr "Description"
+
+msgid "Quantity"
+msgstr "Quantité"
+
+msgid "Price"
+msgstr "Prix"
+
+msgid "Total"
+msgstr "Total"

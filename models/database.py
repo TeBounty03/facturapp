@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import datetime
 
 DB_PATH = "data/invoices.db"
 
@@ -26,10 +27,10 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         number TEXT,
         date TEXT,
-        client_id INTEGER,
+        customer_id INTEGER,
         total REAL,
         status TEXT,
-        FOREIGN KEY(client_id) REFERENCES customers(id)
+        FOREIGN KEY(customer_id) REFERENCES customers(id)
     )
     """)
 
@@ -48,3 +49,22 @@ def init_db():
 
     conn.commit()
     conn.close()
+    
+def generate_invoice_number():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT COUNT(*) FROM invoices")
+    count = cursor.fetchone()[0] + 1
+    conn.close()
+
+    return f"FAC-{count:04d}"
+
+def get_all_customers():
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, name FROM customers")
+    customers = cursor.fetchall()
+    conn.close()
+    return customers
+
