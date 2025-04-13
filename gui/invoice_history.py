@@ -3,25 +3,47 @@ from tkinter import ttk
 import sqlite3
 from models.database import DB_PATH
 from services.pdf_generator import generate_invoice_pdf
+from tkinter import messagebox
 
 class InvoiceHistory(tk.Toplevel):
     def __init__(self):
         super().__init__()
         self.title("Invoice history")
-        self.geometry("600x400")
+        self.geometry("700x500")
+        self.configure(bg="#f5f5f5")
+        
+        title_label = tk.Label(self, text="🧾 Invoices", font=("Helvetica", 18, "bold"), bg="#f5f5f5", fg="#333")
+        title_label.pack(pady=15)
+        
+        # Frame pour ajouter du padding autour du tableau
+        table_frame = tk.Frame(self, bg="#f5f5f5")
+        table_frame.pack(fill=tk.BOTH, expand=True, padx=20)
 
-        self.tree = ttk.Treeview(self, columns=("id", "number", "date", "total", "status"), show="headings")
+        self.tree = ttk.Treeview(self, columns=("id", "number", "date", "total"), show="headings")
         self.tree.heading("id", text="ID")
         self.tree.heading("number", text="Invoice number")
         self.tree.heading("date", text="Date")
-        self.tree.heading("total", text="Total ()")
-        self.tree.heading("status", text="Status")
-        self.tree.pack(fill=tk.BOTH, expand=True)
-        self.tree.column("id", width=0, stretch=False) # Hide ID column
+        self.tree.heading("total", text="Total (€)")
         
-        # Button to generate PDF for selected invoice
-        btn_pdf = tk.Button(self, text="📄 Print selected invoice", command=self.generate_selected_pdf)
-        btn_pdf.pack(pady=10)
+        # Largeur des colonnes
+        self.tree.column("id", width=0, stretch=False)  # Masquer l'ID
+        self.tree.column("number", width=100)
+        self.tree.column("date", width=150)
+        self.tree.column("total", width=100)
+
+        self.tree.pack(fill=tk.BOTH, expand=True)
+
+        # Bouton pour imprimer
+        btn_pdf = tk.Button(
+            self,
+            text="🖨️ Print selected invoice",
+            command=self.generate_selected_pdf,
+            bg="#4CAF50", fg="white",
+            font=("Helvetica", 12, "bold"),
+            relief=tk.FLAT,
+            padx=15, pady=8
+        )
+        btn_pdf.pack(pady=20)
 
         self.load_invoices()
 
@@ -31,7 +53,7 @@ class InvoiceHistory(tk.Toplevel):
         """
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT number, date, total, status FROM invoices ORDER BY date DESC")
+        cursor.execute("SELECT id, number, date, total FROM invoices ORDER BY date DESC")
         for row in cursor.fetchall():
             self.tree.insert("", "end", values=row)
         conn.close()
@@ -48,6 +70,9 @@ class InvoiceHistory(tk.Toplevel):
         item = self.tree.item(selected_item)
         values = item["values"]
         invoice_id = values[0]  # Assuming the first column is the ID
-        generate_invoice_pdf(invoice_id)
-        tk.messagebox.showinfo("Success”, ”Successfully generated PDF !")
+        try:
+            generate_invoice_pdf(invoice_id)
+            messagebox.showinfo("Success", "Successfully generated PDF ✅")
+        except Exception as e:
+            messagebox.showerror("Error", f"Unable to generate PDF:\n{e}")
 
