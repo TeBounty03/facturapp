@@ -19,17 +19,19 @@ class InvoiceHistory(tk.Toplevel):
         table_frame = tk.Frame(self, bg="#f5f5f5")
         table_frame.pack(fill=tk.BOTH, expand=True, padx=20)
 
-        self.tree = ttk.Treeview(self, columns=("id", "number", "date", "total"), show="headings")
+        self.tree = ttk.Treeview(self, columns=("id", "number", "date", "total", "status"), show="headings")
         self.tree.heading("id", text="ID")
         self.tree.heading("number", text="Invoice number")
         self.tree.heading("date", text="Date")
         self.tree.heading("total", text="Total (€)")
+        self.tree.heading("status", text="Status")
         
         # Largeur des colonnes
         self.tree.column("id", width=0, stretch=False)  # Masquer l'ID
         self.tree.column("number", width=100)
         self.tree.column("date", width=150)
         self.tree.column("total", width=100)
+        self.tree.column("status", width=100)
 
         self.tree.pack(fill=tk.BOTH, expand=True)
 
@@ -53,7 +55,7 @@ class InvoiceHistory(tk.Toplevel):
         """
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("SELECT id, number, date, total FROM invoices ORDER BY date DESC")
+        cursor.execute("SELECT id, number, date, total, status FROM invoices ORDER BY date DESC")
         for row in cursor.fetchall():
             self.tree.insert("", "end", values=row)
         conn.close()
@@ -64,7 +66,7 @@ class InvoiceHistory(tk.Toplevel):
         """
         selected_item = self.tree.selection()
         if not selected_item:
-            tk.messagebox.showwarning("Attention”, ”Select an invoice.")
+            messagebox.showwarning("Attention”, ”Select an invoice.")
             return
 
         item = self.tree.item(selected_item)

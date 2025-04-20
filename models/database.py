@@ -13,10 +13,12 @@ def init_db():
     CREATE TABLE IF NOT EXISTS customers (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT,
-        address TEXT,
+        street TEXT,
+        country TEXT,
+        destinataire TEXT,
         email TEXT,
         customer_name TEXT,
-        phone TEXT
+        number TEXT
     )
     """)
 
@@ -38,6 +40,7 @@ def init_db():
     CREATE TABLE IF NOT EXISTS items (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         invoice_id INTEGER,
+        project_id TEXT,
         description TEXT,
         quantity INTEGER,
         unit_price REAL,

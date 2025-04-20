@@ -10,15 +10,27 @@ class CustomerManager(tk.Toplevel):
         self.geometry("400x400")
 
         self.name_var = tk.StringVar()
-        self.address_var = tk.StringVar()
+        self.street_var = tk.StringVar()
+        self.country_var = tk.StringVar()
+        self.destinataire_var = tk.StringVar()
+        self.number_var = tk.StringVar()
         self.email_var = tk.StringVar()
 
         tk.Label(self, text="Name :").pack()
         tk.Entry(self, textvariable=self.name_var).pack()
 
-        tk.Label(self, text="Address :").pack()
-        tk.Entry(self, textvariable=self.address_var).pack()
+        tk.Label(self, text="Street :").pack()
+        tk.Entry(self, textvariable=self.street_var).pack()
+        
+        tk.Label(self, text="Country :").pack()
+        tk.Entry(self, textvariable=self.country_var).pack()
+        
+        tk.Label(self, text="Destinataire :").pack()
+        tk.Entry(self, textvariable=self.destinataire_var).pack()
 
+        tk.Label(self, text="Number :").pack()
+        tk.Entry(self, textvariable=self.number_var).pack()
+        
         tk.Label(self, text="Email :").pack()
         tk.Entry(self, textvariable=self.email_var).pack()
 
@@ -35,7 +47,10 @@ class CustomerManager(tk.Toplevel):
         If the name is empty, show an error message.
         """
         name = self.name_var.get()
-        address = self.address_var.get()
+        street = self.street_var.get()
+        country = self.country_var.get()
+        destinataire = self.destinataire_var.get()
+        number = self.number_var.get()
         email = self.email_var.get()
 
         if not name:
@@ -44,12 +59,15 @@ class CustomerManager(tk.Toplevel):
 
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO customers (name, address, email) VALUES (?, ?, ?)", (name, address, email))
+        cursor.execute("INSERT INTO customers (name, street, country, destinataire, number, email) VALUES (?, ?, ?, ?, ?, ?)", (name, street, country, destinataire, number, email))
         conn.commit()
         conn.close()
 
         self.name_var.set("")
-        self.address_var.set("")
+        self.street_var.set("")
+        self.country_var.set("")
+        self.destinataire_var.set("")
+        self.number_var.set("")
         self.email_var.set("")
 
         self.load_customers()

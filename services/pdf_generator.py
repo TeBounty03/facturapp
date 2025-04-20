@@ -99,7 +99,7 @@ def generate_invoice_pdf(invoice_id):
     c.line(table_x + col_widths[0] + col_widths[1], y - row_height, table_x + col_widths[0] + col_widths[1], y)
     
     c.drawString(table_x + col_widths[0] + col_widths[1] + 2*mm, header_y, "Unit Price")
-    c.line(table_x + col_widths[0] + col_widths[1] + col_widths[2], y - row_height, 
+    c.line(table_x + col_widths[0] + col_widths[1] + col_widths[2], y - row_height,
            table_x + col_widths[0] + col_widths[1] + col_widths[2], y)
     
     c.drawString(table_x + col_widths[0] + col_widths[1] + col_widths[2] + 2*mm, header_y, "Total")
