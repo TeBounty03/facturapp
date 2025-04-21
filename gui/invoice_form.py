@@ -1,10 +1,9 @@
 import tkinter as tk
-import sqlite3
-import datetime
 import gettext
-from models.database import DB_PATH, generate_invoice_number
+from models.database import DB_PATH
 from tkinter import ttk
 from models.database import get_all_customers
+from services.invoice_service import save_invoice
 
 _ = gettext.gettext # Translation function
 
@@ -97,41 +96,18 @@ class InvoiceForm(tk.Frame):
             print("No items to save.")
             return
 
-        total_general = sum(item[3] for item in self.items)
-        number = generate_invoice_number()
-        date = datetime.date.today().isoformat()
         customer_name = self.customer_var.get()
         customer_id = self.customers_dict.get(customer_name, None)
-        status = "Draft"
 
+        try:
+            invoice_number = save_invoice(customer_id, self.items)
+            print(f"Invoice {invoice_number} successfully saved ✅")
 
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-
-        # Save invoice
-        cursor.execute("""
-            INSERT INTO invoices (number, date, customer_id, total,)
-            VALUES (?, ?, ?, ?, ?)
-        """, (number, date, customer_id, total_general, status))
-
-        invoice_id = cursor.lastrowid
-
-        # Save items
-        for desc, qty, price, total in self.items:
-            cursor.execute("""
-                INSERT INTO items (invoice_id, description, quantity, unit_price, total)
-                VALUES (?, ?, ?, ?, ?)
-            """, (invoice_id, desc, qty, price, total))
-
-        conn.commit()
-        conn.close()
-
-        print(f"Invoice {number} successfully saved ✅")
-
-        # Optionnel : désactiver le bouton ou reset les champs
-        self.items.clear()
-        self.tree.delete(*self.tree.get_children())
-        self.total_label.config(text="Total : 0.00 €")
+            self.items.clear()
+            self.tree.delete(*self.tree.get_children())
+            self.total_label.config(text="Total : 0.00 €")
+        except Exception as e:
+            print("Error saving invoice:", e)
     
     def load_customers(self):
         customers = get_all_customers()

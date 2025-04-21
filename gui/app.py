@@ -1,8 +1,7 @@
 import tkinter as tk
 from gui.invoice_form import InvoiceForm
-from services.pdf_generator import generate_invoice_pdf
 from gui.invoice_history import InvoiceHistory
-from gui.customer_manager import CustomerManager
+from gui.customer_form import CustomerForm
 
 def launch_app():
     root = tk.Tk()
@@ -17,7 +16,7 @@ def launch_app():
     btn_history.pack(pady=5)
     
     # Button to manage customers
-    btn_customers = tk.Button(root, text="👥 Manage customers", command=CustomerManager)
+    btn_customers = tk.Button(root, text="👥 Manage customers", command=CustomerForm)
     btn_customers.pack(pady=5)
 
     root.mainloop()
