@@ -88,13 +88,13 @@ class CustomerForm(tk.Toplevel):
 
     def validate_fields(self):
         valid = True
+        email_valid = True
         fields = [
             (self.name_var, self.name_entry),
             (self.street_var, self.street_entry),
             (self.country_var, self.country_entry),
             (self.destinataire_var, self.destinataire_entry),
             (self.number_var, self.number_entry),
-            (self.email_var, self.email_entry),
         ]
         
         # Validation des champs vides
@@ -109,11 +109,11 @@ class CustomerForm(tk.Toplevel):
         if self.email_var.get().strip() and not self.validate_email(self.email_var.get().strip()):
             self.email_entry.config(highlightthickness=2, highlightbackground="red")
             self.show_warning("Incorrect format", "Please enter a valid email address (e.g. exemple@domaine.com)")
-            valid = False
+            email_valid = False
         else:
             self.email_entry.config(highlightthickness=0)
         
-        return valid
+        return valid, email_valid
 
     def add_customer(self):
         if not self.validate_fields():
@@ -128,11 +128,14 @@ class CustomerForm(tk.Toplevel):
             number=self.number_var.get(),
             email=self.email_var.get(),
         )
-
-        add_customer(customer)
-        self._reset_form()
-        self.load_customers()
-        messagebox.showinfo("Success", "Customer added successfully", parent=self)
+        try:
+            customer_id = add_customer(customer)
+            self._reset_form()
+            self.load_customers()
+            messagebox.showinfo(f"Success, Customer {customer_id} added successfully", parent=self)
+        except Exception as e:
+            self.show_warning(f"Error, Customer {customer_id} already exists", parent=self)
+            return
 
     def select_customer(self, event):
         selected = self.customer_list.get(tk.ACTIVE)
@@ -168,11 +171,15 @@ class CustomerForm(tk.Toplevel):
             number=self.number_var.get(),
             email=self.email_var.get()
         )
-
-        update_customer(customer)
-        messagebox.showinfo("Success", "Customer updated successfully", parent=self)
-        self._reset_form()
-        self.load_customers()
+        
+        try:
+            customer_id = update_customer(customer)
+            self._reset_form()
+            self.load_customers()
+            messagebox.showinfo(f"Success, Customer {customer_id} updated successfully", parent=self)
+        except Exception as e:
+            self.show_warning(f"Error, Customer {customer_id}", parent=self)
+            return
 
     def delete_customer(self):
         self._keep_on_top() # Keep the window on top during deletion confirmation
@@ -181,8 +188,13 @@ class CustomerForm(tk.Toplevel):
             return
         customer_id = selected.split(" - ")[0]
         if messagebox.askyesno("Delete", "Delete this customer?", parent=self):
-            delete_customer_by_id(customer_id)
-            self.load_customers()
+            try:
+                customer_id = int(customer_id)
+                delete_customer_by_id(customer_id)
+                self.load_customers()
+            except ValueError:
+                self.show_warning("Error", "Invalid customer ID", parent=self)
+                return
         self.focus_force() # Re-focus on the main window
 
     def load_customers(self):
