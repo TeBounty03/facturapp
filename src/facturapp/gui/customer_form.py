@@ -1,19 +1,21 @@
 import tkinter as tk
 from tkinter import messagebox
-from models.customer import Customer
-from services.customer_service import add_customer, get_all_customers, update_customer, delete_customer_by_id
+from facturapp.models.customer import Customer
+from facturapp.services.customer_service import add_customer, get_all_customers, update_customer, delete_customer_by_id
 import re # For email validation
 
 class CustomerForm(tk.Toplevel):
-    def __init__(self, master=None):
+    def __init__(self, master=None, refresh_callback=None):
         super().__init__(master)
-        self.title("Customer management")
-        self.geometry("400x500")
+        self.refresh_callback = refresh_callback  # Stockage du callback
+        self.title("Customer Manager")
+        self._setup_ui()
+        self.load_customers()
         
+    def _setup_ui(self):
         # Configuration pour rester au premier plan
         self.attributes('-topmost', True)  # Force à rester devant
         self.grab_set()  # Bloque les autres fenêtres
-        self.transient(master)  # Lien avec la fenêtre parente
 
         self.editing_customer_id = None
 
@@ -87,55 +89,66 @@ class CustomerForm(tk.Toplevel):
         return re.match(pattern, email) is not None
 
     def validate_fields(self):
-        valid = True
-        email_valid = True
+        """Valide les champs et met en évidence les erreurs visuellement"""
+        is_valid = True
         fields = [
             (self.name_var, self.name_entry),
             (self.street_var, self.street_entry),
             (self.country_var, self.country_entry),
             (self.destinataire_var, self.destinataire_entry),
             (self.number_var, self.number_entry),
+            (self.email_var, self.email_entry)
         ]
         
-        # Validation des champs vides
+        # Réinitialise l'apparence de tous les champs
+        for _, entry in fields:
+            entry.config(highlightthickness=0, highlightbackground="#f0f0f0")
+        
+        # Vérifie les champs obligatoires
         for var, entry in fields:
             if not var.get().strip():
-                entry.config(highlightthickness=2, highlightbackground="red")
-                valid = False
-            else:
-                entry.config(highlightthickness=0)
+                entry.config(highlightthickness=1, highlightbackground="red")
+                is_valid = False
         
-        # Validation spécifique pour l'email
-        if self.email_var.get().strip() and not self.validate_email(self.email_var.get().strip()):
-            self.email_entry.config(highlightthickness=2, highlightbackground="red")
-            self.show_warning("Incorrect format", "Please enter a valid email address (e.g. exemple@domaine.com)")
-            email_valid = False
-        else:
-            self.email_entry.config(highlightthickness=0)
+        # Validation spécifique de l'email
+        email = self.email_var.get().strip()
+        if email and not self.validate_email(email):
+            self.email_entry.config(highlightthickness=1, highlightbackground="red")
+            is_valid = False
         
-        return valid, email_valid
+        return is_valid
 
     def add_customer(self):
+        # Validation des champs
         if not self.validate_fields():
             return
 
         customer = Customer(
             id=None,
-            name=self.name_var.get(),
-            street=self.street_var.get(),
-            country=self.country_var.get(),
-            destinataire=self.destinataire_var.get(),
-            number=self.number_var.get(),
-            email=self.email_var.get(),
+            name=self.name_var.get().strip(),
+            street=self.street_var.get().strip(),
+            country=self.country_var.get().strip(),
+            destinataire=self.destinataire_var.get().strip(),
+            number=self.number_var.get().strip(),
+            email=self.email_var.get().strip()
         )
+
         try:
+            # Ajout du client
             customer_id = add_customer(customer)
             self._reset_form()
+            
+            # Rechargement local
             self.load_customers()
-            messagebox.showinfo(f"Success, Customer {customer_id} added successfully", parent=self)
+            
+            # Appel du callback si disponible
+            if self.refresh_callback:
+                self.refresh_callback()
+            
+            # Feedback utilisateur
+            messagebox.showinfo("Succès", f"Client {customer_id} ajouté!", parent=self)
         except Exception as e:
-            self.show_warning(f"Error, Customer {customer_id} already exists", parent=self)
-            return
+            messagebox.showerror("Erreur", f"Échec de l'ajout: {str(e)}", parent=self)
 
     def select_customer(self, event):
         selected = self.customer_list.get(tk.ACTIVE)
@@ -215,7 +228,7 @@ class CustomerForm(tk.Toplevel):
         self.delete_btn.config(state=tk.DISABLED)
         self.add_btn.config(state=tk.NORMAL)
     
-    def show_warning(self, title, message):
+    def show_warning(self, title, message, parent=None):
         """Displays an error message without closing the parent window."""
         warning = tk.Toplevel(self)
         warning.title(title)

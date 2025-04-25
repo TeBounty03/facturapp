@@ -4,5 +4,7 @@ Python application for simple invoice generation (with Tkinter interface and PDF
 
 ## Launch the project
 
-```bash
-python main.py
+@echo off
+cd src
+python -m facturapp.main
+pause

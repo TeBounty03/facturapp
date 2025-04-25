@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 import sqlite3
-from models.database import DB_PATH
-from services.pdf_generator import generate_invoice_pdf
+from facturapp.utils.database import DB_PATH
+from facturapp.services.pdf_generator import generate_invoice_pdf
 from tkinter import messagebox
 
 class InvoiceHistory(tk.Toplevel):

@@ -1,7 +1,7 @@
 import tkinter as tk
-from gui.invoice_form import InvoiceForm
-from gui.invoice_history import InvoiceHistory
-from gui.customer_form import CustomerForm
+from facturapp.gui.invoice_form import InvoiceForm
+from facturapp.gui.customer_form import CustomerForm
+from facturapp.gui.invoice_history import InvoiceHistory
 
 def launch_app():
     root = tk.Tk()

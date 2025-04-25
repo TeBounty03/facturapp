@@ -7,8 +7,8 @@ import sqlite3
 import json
 import os
 
-from models.database import DB_PATH
-from services.db import get_invoice_with_customer, get_invoice_items
+from facturapp.utils.database import DB_PATH
+from facturapp.utils.db import get_invoice_with_customer, get_invoice_items
 
 CONFIG_PATH = "config/user_config.json"
 OUTPUT_DIR = "exports"

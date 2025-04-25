@@ -1,10 +1,20 @@
-import sqlite3
 import os
+import sys
+import sqlite3
+from pathlib import Path
 
-DB_PATH = "data/invoices.db"
+def get_database_path():
+    """Retourne le chemin absolu vers la base de données, même dans un .exe"""
+    if getattr(sys, 'frozen', False):  # PyInstaller
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent.parent.parent
+    return base_path / "data" / "facturapp.db"
+
+DB_PATH = get_database_path()
 
 def init_db():
-    os.makedirs("data", exist_ok=True)
+    os.makedirs(DB_PATH.parent, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 

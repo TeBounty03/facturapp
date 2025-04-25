@@ -1,9 +1,9 @@
 import tkinter as tk
 import gettext
-from models.database import DB_PATH
+from facturapp.utils.database import DB_PATH
 from tkinter import ttk
-from models.database import get_all_customers
-from services.invoice_service import save_invoice
+from facturapp.utils.database import get_all_customers
+from facturapp.services.invoice_service import save_invoice
 
 _ = gettext.gettext # Translation function
 
@@ -11,14 +11,22 @@ _ = gettext.gettext # Translation function
 class InvoiceForm(tk.Frame):
     def __init__(self, parent):
         super().__init__(parent)
-
         self.items = []
+        self.customers_dict = {}
         
-        # Sélection customer
+        # Variables
         self.customer_var = tk.StringVar()
-        tk.Label(self, text=_("Customer :")).grid(row=0, column=0, sticky="e")
+        
+        # UI Setup
+        self._setup_ui()
+        self.load_customers()
+        
+    def _setup_ui(self):
+        """Configure l'interface utilisateur"""
+        # Sélection client
+        tk.Label(self, text="Customer :").grid(row=0, column=0, sticky="e")
         self.customer_dropdown = ttk.Combobox(self, textvariable=self.customer_var, state="readonly")
-        self.customer_dropdown.grid(row=0, column=1, padx=5, pady=5)
+        self.customer_dropdown.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
 
         # Project ID
         tk.Label(self, text=_("Project ID :")).grid(row=1, column=0, sticky="e")
@@ -110,7 +118,15 @@ class InvoiceForm(tk.Frame):
             print("Error saving invoice:", e)
     
     def load_customers(self):
-        customers = get_all_customers()
-        self.customers_dict = {name: id_ for id_, name in customers}
-        self.customer_dropdown['values'] = list(self.customers_dict.keys())
+        """Charge et actualise la liste des clients"""
+        try:
+            customers = get_all_customers()
+            self.customers_dict = {f"{name} (ID: {id_})": id_ for id_, name in customers}
+            self.customer_dropdown['values'] = list(self.customers_dict.keys())
+            
+            if self.customers_dict:
+                self.customer_var.set(next(iter(self.customers_dict.keys())))
+        except Exception as e:
+            print(f"Erreur lors du chargement des clients: {e}")
+            self.customer_dropdown['values'] = []
 

@@ -1,33 +1,32 @@
 import sqlite3
-from models.database import DB_PATH
-from models.customer import Customer
+from facturapp.utils.database import DB_PATH
+from facturapp.models.customer import Customer
 from contextlib import closing
 
 def add_customer(customer: Customer) -> int:
+    """Ajoute un nouveau client et retourne son ID"""
     try:
         with closing(sqlite3.connect(DB_PATH)) as conn:
             with closing(conn.cursor()) as cursor:
                 cursor.execute("""
                     INSERT INTO customers (name, street, country, destinataire, number, email)
                     VALUES (?, ?, ?, ?, ?, ?)
-                """, (customer.name, customer.street, customer.country, customer.destinataire, customer.number, customer.email))
+                """, (customer.name, customer.street, customer.country, 
+                     customer.destinataire, customer.number, customer.email))
                 conn.commit()
                 return cursor.lastrowid
     except sqlite3.Error as e:
-        raise Exception(f"Client insertion error: {e}")
+        raise Exception(f"Erreur d'ajout client: {e}")
 
-def get_all_customers() -> list[Customer]:
+def get_all_customers() -> list[tuple[int, str]]:
+    """Récupère tous les clients (id, nom)"""
     try:
         with closing(sqlite3.connect(DB_PATH)) as conn:
             with closing(conn.cursor()) as cursor:
-                cursor.execute("SELECT id, name, street, country, destinataire, number, email FROM customers ORDER BY name ASC")
-                rows = cursor.fetchall()
-                conn.close()
-                if not rows:
-                    return []
-                return [Customer(*row) for row in rows]
+                cursor.execute("SELECT id, name FROM customers ORDER BY name ASC")
+                return cursor.fetchall()
     except sqlite3.Error as e:
-        raise Exception(f"Error fetching customers: {e}")
+        raise Exception(f"Erreur de récupération clients: {e}")
 
 def update_customer(customer: Customer) -> bool:
     if not customer.id:
@@ -41,7 +40,6 @@ def update_customer(customer: Customer) -> bool:
                     WHERE id = ?
                 """, (customer.name, customer.street, customer.country, customer.destinataire, customer.number, customer.email, customer.id))
                 conn.commit()
-                conn.close()
                 return cursor.rowcount > 0
     except sqlite3.Error as e:
         raise Exception(f"Error updating customer: {e}")
@@ -54,6 +52,5 @@ def delete_customer_by_id(customer_id):
             with closing(conn.cursor()) as cursor:
                 cursor.execute("DELETE FROM customers WHERE id = ?", (customer_id,))
                 conn.commit()
-                conn.close()
     except sqlite3.Error as e:
         raise Exception(f"Error deleting customer: {e}")

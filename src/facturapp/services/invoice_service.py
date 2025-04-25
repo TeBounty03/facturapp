@@ -1,7 +1,7 @@
 # services/invoice_service.py
 import sqlite3
 import datetime
-from models.database import DB_PATH, generate_invoice_number
+from facturapp.utils.database import DB_PATH, generate_invoice_number
 
 def save_invoice(customer_id, items, status="Draft"):
     total_general = sum(item[4] for item in items)
