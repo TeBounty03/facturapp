@@ -9,6 +9,7 @@ class CustomerForm(tk.Toplevel):
         super().__init__(master)
         self.refresh_callback = refresh_callback  # Stockage du callback
         self.title("Customer Manager")
+        self.geometry("400x700")
         self._setup_ui()
         self.load_customers()
         
@@ -203,7 +204,8 @@ class CustomerForm(tk.Toplevel):
         if messagebox.askyesno("Delete", "Delete this customer?", parent=self):
             try:
                 customer_id = int(customer_id)
-                delete_customer_by_id(customer_id)
+                if delete_customer_by_id(customer_id):
+                    self._reset_form()
                 self.load_customers()
             except ValueError:
                 self.show_warning("Error", "Invalid customer ID", parent=self)

@@ -2,8 +2,6 @@ from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 from reportlab.lib.units import mm
 from reportlab.lib import colors
-from datetime import datetime
-import sqlite3
 import json
 import os
 

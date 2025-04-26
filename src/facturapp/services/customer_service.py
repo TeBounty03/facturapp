@@ -18,13 +18,14 @@ def add_customer(customer: Customer) -> int:
     except sqlite3.Error as e:
         raise Exception(f"Erreur d'ajout client: {e}")
 
-def get_all_customers() -> list[tuple[int, str]]:
-    """Récupère tous les clients (id, nom)"""
+def get_all_customers() -> list[Customer]:
+    """Récupère tous les clients complets en tant qu'objets Customer."""
     try:
         with closing(sqlite3.connect(DB_PATH)) as conn:
             with closing(conn.cursor()) as cursor:
-                cursor.execute("SELECT id, name FROM customers ORDER BY name ASC")
-                return cursor.fetchall()
+                cursor.execute("SELECT id, name, street, country, destinataire, number, email FROM customers ORDER BY name ASC")
+                rows = cursor.fetchall()
+                return [Customer(*row) for row in rows]
     except sqlite3.Error as e:
         raise Exception(f"Erreur de récupération clients: {e}")
 

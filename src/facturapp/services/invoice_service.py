@@ -19,11 +19,11 @@ def save_invoice(customer_id, items, status="Draft"):
     # Get the last inserted invoice ID
     invoice_id = cursor.lastrowid
 
-    for project, desc, qty, price, total in items:
+    for project_id, desc, qty, price, total in items:
         cursor.execute("""
-            INSERT INTO items (invoice_id, project, description, quantity, unit_price, total)
+            INSERT INTO items (invoice_id, project_id, description, quantity, unit_price, total)
             VALUES (?, ?, ?, ?, ?, ?)
-        """, (invoice_id, project, desc, qty, price, total))
+        """, (invoice_id, project_id, desc, qty, price, total))
 
     conn.commit()
     conn.close()

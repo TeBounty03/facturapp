@@ -22,7 +22,7 @@ class InvoiceForm(tk.Frame):
         self.load_customers()
         
     def _setup_ui(self):
-        """Configure l'interface utilisateur"""
+        """Setup the UI components for the invoice form."""
         # Sélection client
         tk.Label(self, text="Customer :").grid(row=0, column=0, sticky="e")
         self.customer_dropdown = ttk.Combobox(self, textvariable=self.customer_var, state="readonly")
@@ -33,6 +33,14 @@ class InvoiceForm(tk.Frame):
         self.project_id = tk.Entry(self, width=40)
         self.project_id.grid(row=1, column=1, columnspan=2, pady=5)
         
+        # FLID (Initially hidden)
+        self.flid_label = tk.Label(self, text=_("FLID :"))
+        self.flid_entry = tk.Entry(self, width=40)
+
+        # Button to show/hide FLID
+        self.toggle_flid_btn = tk.Button(self, text=_("Show FLID"), command=self.toggle_flid)
+        self.toggle_flid_btn.grid(row=2, column=2, padx=5)
+        
         # Description
         tk.Label(self, text=_("Description :")).grid(row=2, column=0, sticky="e")
         self.description_entry = tk.Entry(self, width=40)
@@ -40,17 +48,24 @@ class InvoiceForm(tk.Frame):
 
         # Quantity (hours)
         tk.Label(self, text=_("Quantity (h) :")).grid(row=3, column=0, sticky="e")
-        self.qty_entry = tk.Entry(self)
+        tk.Label(self, text=_("Quantity (h) :")).grid(row=3, column=0, sticky="e")
+        self.qty_var = tk.StringVar()
+        self.qty_entry = tk.Entry(self, textvariable=self.qty_var)  # Use the StringVar
+        self.qty_entry.config(validate="key", validatecommand=(self.register(self.validate_number), '%P'))
         self.qty_entry.grid(row=3, column=1, pady=5)
 
         # Price per hour
         tk.Label(self, text=_("Price / hours (€) :")).grid(row=4, column=0, sticky="e")
-        self.price_entry = tk.Entry(self)
+        self.price_var = tk.StringVar()
+        self.price_entry = tk.Entry(self, textvariable=self.price_var)  # Use the StringVar
+        self.price_entry.config(validate="key", validatecommand=(self.register(self.validate_number), '%P'))
         self.price_entry.grid(row=4, column=1, pady=5)
         
         # Payment Terms
         tk.Label(self, text=_("Payment Terms :")).grid(row=5, column=0, sticky="e")
-        self.payment_terms = tk.Entry(self)
+        self.payment_terms_var = tk.StringVar()
+        self.payment_terms = ttk.Combobox(self, textvariable=self.payment_terms_var, state="readonly")
+        self.payment_terms['values'] = ("WireTransfer", "E-Transfer", "Paypal", "Check")
         self.payment_terms.grid(row=5, column=1, pady=5)
 
         # Button "Add"
@@ -72,10 +87,17 @@ class InvoiceForm(tk.Frame):
         self.save_btn.grid(row=9, column=0, columnspan=3, pady=10)
 
         self.load_customers()
+    
+    def validate_number(self, new_value):
+        """Validates that the number field contains digits only"""
+        if new_value == "" or new_value.isdigit():
+            return True
+        return False
 
 
     def add_item(self):
         project = self.project_id.get()
+        flid = self.flid_entry.get() if getattr(self, 'flid_visible', False) else None
         desc = self.description_entry.get()
         qty = self.qty_entry.get()
         price = self.price_entry.get()
@@ -84,7 +106,7 @@ class InvoiceForm(tk.Frame):
             qty = int(qty)
             price = float(price)
             total = qty * price
-            self.items.append((project, desc, qty, price, total))
+            self.items.append((project, flid, desc, qty, price, total))
             self.tree.insert("", "end", values=(project, desc, qty, f"{price:.2f}", f"{total:.2f}"))
 
             # Reset fields
@@ -97,11 +119,12 @@ class InvoiceForm(tk.Frame):
             total_general = sum(item[3] for item in self.items)
             self.total_label.config(text=f"Total : {total_general:.2f} €")
         except ValueError:
-            print("Error: quantity and price fields must be numbers.")
+            self.show_warning(_("Error"), _("Invalid input. Please check your values."))
     
     def save_invoice(self):
         if not self.items:
             print("No items to save.")
+            self.show_warning(_("Error"), _("No items to save."))
             return
 
         customer_name = self.customer_var.get()
@@ -115,10 +138,11 @@ class InvoiceForm(tk.Frame):
             self.tree.delete(*self.tree.get_children())
             self.total_label.config(text="Total : 0.00 €")
         except Exception as e:
-            print("Error saving invoice:", e)
+            print(f"Error saving invoice: {e}")
+            self.show_warning(_("Error"), _("Failed to save invoice."))
     
     def load_customers(self):
-        """Charge et actualise la liste des clients"""
+        """Load customers from the database and populate the dropdown menu."""
         try:
             customers = get_all_customers()
             self.customers_dict = {f"{name} (ID: {id_})": id_ for id_, name in customers}
@@ -127,6 +151,36 @@ class InvoiceForm(tk.Frame):
             if self.customers_dict:
                 self.customer_var.set(next(iter(self.customers_dict.keys())))
         except Exception as e:
-            print(f"Erreur lors du chargement des clients: {e}")
+            print(f"Error loading customers: {e}")
+            self.show_warning(_("Error"), _("Failed to load customers."))
             self.customer_dropdown['values'] = []
+    
+    def toggle_flid(self):
+        if hasattr(self, 'flid_visible') and self.flid_visible:
+            # Hide FLID
+            self.flid_label.grid_remove()
+            self.flid_entry.grid_remove()
+            self.toggle_flid_btn.config(text=_("Show FLID"))
+            self.flid_visible = False
+        else:
+            # Show FLID
+            self.flid_label.grid(row=2, column=0, sticky="e")
+            self.flid_entry.grid(row=2, column=1, columnspan=1, pady=5)
+            self.toggle_flid_btn.config(text=_("Hide FLID"))
+            self.flid_visible = True
+
+        
+    def show_warning(self, title, message, parent=None):
+        """Displays an error message without closing the parent window."""
+        warning = tk.Toplevel(self)
+        warning.title(title)
+        warning.geometry("500x100")
+        warning.resizable(False, False)
+        
+        tk.Label(warning, text=message, padx=10, pady=10).pack()
+        tk.Button(warning, text="OK", command=warning.destroy).pack(pady=5)
+        
+        # Makes the window modal (blocks interaction with the parent window)
+        warning.grab_set()
+        self.wait_window(warning)  # Waits for user to close alert
 
