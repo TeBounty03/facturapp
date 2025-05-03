@@ -39,6 +39,7 @@ def init_db():
         number TEXT,
         date TEXT,
         customer_id INTEGER,
+        flid TEXT,
         total REAL,
         status TEXT,
         FOREIGN KEY(customer_id) REFERENCES customers(id)

@@ -53,6 +53,8 @@ class InvoiceHistory(tk.Toplevel):
         """ Load invoices from the database and display them in the treeview.
         The list is sorted by date in descending order.
         """
+        self.tree.delete(*self.tree.get_children())  # <- Supprime les lignes existantes
+
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
         cursor.execute("SELECT id, number, date, total, status FROM invoices ORDER BY date DESC")

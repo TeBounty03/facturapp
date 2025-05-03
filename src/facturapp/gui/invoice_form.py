@@ -2,8 +2,8 @@ import tkinter as tk
 import gettext
 from facturapp.utils.database import DB_PATH
 from tkinter import ttk
-from facturapp.utils.database import get_all_customers
-from facturapp.services.invoice_service import save_invoice
+from src.facturapp.utils.database import get_all_customers
+from src.facturapp.services.invoice_service import save_invoice
 
 _ = gettext.gettext # Translation function
 
@@ -23,6 +23,7 @@ class InvoiceForm(tk.Frame):
         
     def _setup_ui(self):
         """Setup the UI components for the invoice form."""
+        
         # Sélection client
         tk.Label(self, text="Customer :").grid(row=0, column=0, sticky="e")
         self.customer_dropdown = ttk.Combobox(self, textvariable=self.customer_var, state="readonly")
@@ -36,55 +37,56 @@ class InvoiceForm(tk.Frame):
         # FLID (Initially hidden)
         self.flid_label = tk.Label(self, text=_("FLID :"))
         self.flid_entry = tk.Entry(self, width=40)
-
-        # Button to show/hide FLID
-        self.toggle_flid_btn = tk.Button(self, text=_("Show FLID"), command=self.toggle_flid)
-        self.toggle_flid_btn.grid(row=2, column=2, padx=5)
         
         # Description
-        tk.Label(self, text=_("Description :")).grid(row=2, column=0, sticky="e")
+        tk.Label(self, text=_("Description :")).grid(row=3, column=0, sticky="e")
         self.description_entry = tk.Entry(self, width=40)
-        self.description_entry.grid(row=2, column=1, columnspan=2, pady=5)
+        self.description_entry.grid(row=3, column=1, columnspan=2, pady=5)
 
         # Quantity (hours)
-        tk.Label(self, text=_("Quantity (h) :")).grid(row=3, column=0, sticky="e")
-        tk.Label(self, text=_("Quantity (h) :")).grid(row=3, column=0, sticky="e")
+        tk.Label(self, text=_("Quantity (h) :")).grid(row=4, column=0, sticky="e")
         self.qty_var = tk.StringVar()
-        self.qty_entry = tk.Entry(self, textvariable=self.qty_var)  # Use the StringVar
+        self.qty_entry = tk.Entry(self, textvariable=self.qty_var, width=40)  # Use the StringVar
         self.qty_entry.config(validate="key", validatecommand=(self.register(self.validate_number), '%P'))
-        self.qty_entry.grid(row=3, column=1, pady=5)
+        self.qty_entry.grid(row=4, column=1, columnspan=2, pady=5)
 
         # Price per hour
-        tk.Label(self, text=_("Price / hours (€) :")).grid(row=4, column=0, sticky="e")
+        tk.Label(self, text=_("Price / hours (€) :")).grid(row=5, column=0, sticky="e")
         self.price_var = tk.StringVar()
-        self.price_entry = tk.Entry(self, textvariable=self.price_var)  # Use the StringVar
+        self.price_entry = tk.Entry(self, textvariable=self.price_var, width=40)  # Use the StringVar
         self.price_entry.config(validate="key", validatecommand=(self.register(self.validate_number), '%P'))
-        self.price_entry.grid(row=4, column=1, pady=5)
+        self.price_entry.grid(row=5, column=1, columnspan=2, pady=5)
         
         # Payment Terms
-        tk.Label(self, text=_("Payment Terms :")).grid(row=5, column=0, sticky="e")
+        tk.Label(self, text=_("Payment Terms :")).grid(row=6, column=0, sticky="e")
         self.payment_terms_var = tk.StringVar()
-        self.payment_terms = ttk.Combobox(self, textvariable=self.payment_terms_var, state="readonly")
+        self.payment_terms = ttk.Combobox(self, textvariable=self.payment_terms_var, state="readonly", width=40)
+        # Set the default value to "WireTransfer"
+        self.payment_terms.set("WireTransfer")
         self.payment_terms['values'] = ("WireTransfer", "E-Transfer", "Paypal", "Check")
-        self.payment_terms.grid(row=5, column=1, pady=5)
+        self.payment_terms.grid(row=6, column=1, columnspan=2, pady=5)
 
         # Button "Add"
         self.add_btn = tk.Button(self, text=_("Add"), command=self.add_item)
-        self.add_btn.grid(row=6, column=1, pady=10)
+        self.add_btn.grid(row=7, column=1, pady=10)
+        
+        # Button to show/hide FLID
+        self.toggle_flid_btn = tk.Button(self, text=_("Show FLID"), command=self.toggle_flid)
+        self.toggle_flid_btn.grid(row=7, column=2, padx=10)
         
         # List of items
         self.tree = ttk.Treeview(self, columns=(_("Project"), _("Description"), _("Quantity"), _("Price"), _("Total")), show="headings")
         for col in ("Project", "Description", "Quantity", "Price", "Total"):
             self.tree.heading(col, text=col)
             self.tree.column(col, minwidth=100, width=120)
-        self.tree.grid(row=7, column=0, columnspan=3, pady=10)
+        self.tree.grid(row=8, column=0, columnspan=3, pady=10)
         
         # Total
         self.total_label = tk.Label(self, text="Total : 0.00 €", font=("Arial", 14, "bold"))
-        self.total_label.grid(row=8, column=0, columnspan=3, pady=10)
+        self.total_label.grid(row=9, column=0, columnspan=3, pady=10)
         
         self.save_btn = tk.Button(self, text="Save invoice", command=self.save_invoice, bg="#4CAF50", fg="white")
-        self.save_btn.grid(row=9, column=0, columnspan=3, pady=10)
+        self.save_btn.grid(row=10, column=0, columnspan=3, pady=10)
 
         self.load_customers()
     
@@ -111,13 +113,17 @@ class InvoiceForm(tk.Frame):
 
             # Reset fields
             self.project_id.delete(0, tk.END)
+            self.flid_entry.delete(0, tk.END) if getattr(self, 'flid_visible', False) else None
             self.description_entry.delete(0, tk.END)
             self.qty_entry.delete(0, tk.END)
             self.price_entry.delete(0, tk.END)
             
             # Update total label
-            total_general = sum(item[3] for item in self.items)
+            total_general = sum(item[5] for item in self.items)
             self.total_label.config(text=f"Total : {total_general:.2f} €")
+            if len(self.items) == 1:
+                self.customer_dropdown.config(state="disabled")
+
         except ValueError:
             self.show_warning(_("Error"), _("Invalid input. Please check your values."))
     
@@ -129,12 +135,14 @@ class InvoiceForm(tk.Frame):
 
         customer_name = self.customer_var.get()
         customer_id = self.customers_dict.get(customer_name, None)
+        flid = self.flid_entry.get() if getattr(self, 'flid_visible', False) else None
 
         try:
-            invoice_number = save_invoice(customer_id, self.items)
+            invoice_number = save_invoice(customer_id, self.items, flid=flid)
             print(f"Invoice {invoice_number} successfully saved ✅")
 
             self.items.clear()
+            self.customer_dropdown.config(state="readonly")
             self.tree.delete(*self.tree.get_children())
             self.total_label.config(text="Total : 0.00 €")
         except Exception as e:
@@ -165,7 +173,7 @@ class InvoiceForm(tk.Frame):
         else:
             # Show FLID
             self.flid_label.grid(row=2, column=0, sticky="e")
-            self.flid_entry.grid(row=2, column=1, columnspan=1, pady=5)
+            self.flid_entry.grid(row=2, column=1, columnspan=2, pady=5)
             self.toggle_flid_btn.config(text=_("Hide FLID"))
             self.flid_visible = True
 

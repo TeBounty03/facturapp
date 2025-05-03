@@ -5,7 +5,6 @@ from reportlab.lib import colors
 import json
 import os
 
-from facturapp.utils.database import DB_PATH
 from facturapp.utils.db import get_invoice_with_customer, get_invoice_items
 
 CONFIG_PATH = "config/user_config.json"

@@ -1,29 +1,38 @@
 # services/invoice_service.py
 import sqlite3
-import datetime
+from datetime import datetime
 from facturapp.utils.database import DB_PATH, generate_invoice_number
 
-def save_invoice(customer_id, items, status="Draft"):
-    total_general = sum(item[4] for item in items)
-    number = generate_invoice_number()
-    date = datetime.date.today().isoformat()
-
+def save_invoice(customer_id, items, flid=None, status="Draft"):
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
-    cursor.execute("""
-        INSERT INTO invoices (number, date, customer_id, total, status)
-        VALUES (?, ?, ?, ?, ?)
-    """, (number, date, customer_id, total_general, status))
+    invoice_date = datetime.now().strftime("%Y-%m-%d")
+    number = generate_invoice_number()
+    total_amount = sum(qty * price for (_, _, _, qty, price, _) in items)
 
-    # Get the last inserted invoice ID
+    # ➤ Insertion de l'en-tête (avec ou sans FLID)
+    if flid:
+        cursor.execute(
+            "INSERT INTO invoices (customer_id, number, date, flid, status, total) VALUES (?, ?, ?, ?, ?, ?)",
+            (customer_id, number, invoice_date, flid, status, total_amount)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO invoices (customer_id, number, date, status, total) VALUES (?, ?, ?, ?, ?)",
+            (customer_id, number, invoice_date, status, total_amount)
+        )
+
     invoice_id = cursor.lastrowid
 
-    for project_id, desc, qty, price, total in items:
-        cursor.execute("""
-            INSERT INTO items (invoice_id, project_id, description, quantity, unit_price, total)
-            VALUES (?, ?, ?, ?, ?, ?)
-        """, (invoice_id, project_id, desc, qty, price, total))
+    # ➤ Insertion des lignes
+    for item in items:
+        # item = (project, flid_line, description, qty, price, total)
+        project_id, _, description, quantity, unit_price, total = item
+        cursor.execute(
+            "INSERT INTO items (invoice_id, project_id, description, quantity, unit_price, total) VALUES (?, ?, ?, ?, ?, ?)",
+            (invoice_id, project_id, description, quantity, unit_price, total)
+        )
 
     conn.commit()
     conn.close()
